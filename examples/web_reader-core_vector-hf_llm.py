@@ -30,7 +30,7 @@ class RAG:
             model_kwargs={"quantization_config": quantization_config},
         )
 
-        self.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
+        self.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5", cache_folder="./model")
 
         print("Modelos cargados. Agrega documentos para indexar...")
 
@@ -49,14 +49,14 @@ class RAG:
                 documents=documents,
                 embed_model=self.embed_model
             )
-            self.query_engine = vector_index.as_query_engine(llm=self.llm)
+            self.query_engine = vector_index.as_query_engine(llm=self.llm, streaming=True)
 
     def ask_question(self, question):
         if self.query_engine is None:
             print("Motor de queries no ha sido inicializado. Ya tienes documentos indexados?...")
             return
         response = self.query_engine.query(question)
-        print(f"\nRespuesta: {response}")
+        response.print_response_stream()
 
 def main():
     rag = RAG()

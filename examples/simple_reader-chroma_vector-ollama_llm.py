@@ -14,11 +14,11 @@ from llama_index.core.prompts import PromptTemplate
 from transformers import BitsAndBytesConfig
 import torch
 
-data_path = "/home/chachin/Documents/chachin_doc/hongos_medicinales/papers"
+data_path = "./data"
 embedding_path = "./model"
 persist_storage_path = "./storage"
 vector_store_path = "./chroma_db"
-storage_type = "persist" # "db" || "persist"
+storage_type = "db" # "db" || "persist"
 
 
 documents = None
@@ -90,6 +90,8 @@ elif storage_type == "db":
             storage_context=storage_context,
         )
 
-query_engine = index.as_query_engine(llm=llm)
+query_engine = index.as_query_engine(llm=llm, streaming=True)
 
-response = query_engine.query("What are mushrooms, can you explain them to me?")
+response = query_engine.query()
+
+response.print_response_stream()
