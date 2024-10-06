@@ -7,7 +7,7 @@ VectorStoreIndex,
 StorageContext,
 load_index_from_storage
 )
-from llama_index.llms.huggingface import HuggingFaceLLM
+from llama_index.llms.ollama import Ollama
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.prompts import PromptTemplate
@@ -19,25 +19,14 @@ embedding_path = "./model"
 persist_storage_path = "./storage"
 vector_store_path = "./chroma_db"
 storage_type = "db" # "db" || "persist"
-
+question = ""
 
 documents = None
 if storage_type == "persist" or not os.path.isdir(vector_store_path):
     documents = SimpleDirectoryReader(data_path).load_data(show_progress=True)
 
 embed_model = HuggingFaceEmbedding(cache_folder=embedding_path)
-quantization_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_use_double_quant=True,
-)
-llm = HuggingFaceLLM(
-    model_name="mistralai/Mistral-7B-Instruct-v0.1",
-    tokenizer_name="mistralai/Mistral-7B-Instruct-v0.1",
-    query_wrapper_prompt=PromptTemplate("<s>[INST] {query_str} [/INST] </s>\n"),
-    model_kwargs={"quantization_config": quantization_config},
-)
+llm = Ollama(model="llama3.2")
 
 index = None
 if storage_type == "persist":
@@ -90,8 +79,8 @@ elif storage_type == "db":
             storage_context=storage_context,
         )
 
-query_engine = index.as_query_engine(llm=llm, streaming=True)
+query_engine = index.as_query_engine(llm=llm, streaming=True, similarity_top_k=10)
 
-response = query_engine.query()
+response = query_engine.query(question)
 
 response.print_response_stream()
